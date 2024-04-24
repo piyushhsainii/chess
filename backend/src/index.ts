@@ -14,4 +14,5 @@ wss.on("connection",(ws)=>{
     gameManager.addUser(ws)
 
     ws.send("I am connected")
+    ws.on("close",()=> gameManager.removeUser(ws) )
 })
