@@ -29,8 +29,8 @@ class Game {
         if (this.moveCount % 2 === 1 && this.player2 !== socket) {
             return;
         }
-        // moves valid or not
         try {
+            // update the board
             this.board.move(move);
             this.moveCount++;
         }
@@ -42,19 +42,19 @@ class Game {
             this.player1.send(JSON.stringify({
                 type: message_1.GAME_OVER,
                 payload: {
-                    winnder: this.board.turn() === "w" ? "BLACK WON" : "WHITE WON"
+                    winner: this.board.turn() === "w" ? "BLACK WON" : "WHITE WON"
                 }
             }));
             this.player2.send(JSON.stringify({
                 type: message_1.GAME_OVER,
                 payload: {
-                    winnder: this.board.turn() === "w" ? "BLACK WON" : "WHITE WON"
+                    winner: this.board.turn() === "w" ? "BLACK WON" : "WHITE WON"
                 }
             }));
             return;
         }
         // push the move
-        // update the board
+        // moves valid or not
         if (this.moveCount % 2 === 0) {
             this.player1.send(JSON.stringify({
                 type: message_1.MOVE,

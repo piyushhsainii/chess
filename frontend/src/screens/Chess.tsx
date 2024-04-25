@@ -9,16 +9,19 @@ const ChessBoard = () => {
   const [chess, setChess] = useState(new Chess())
   const [board, setBoard] = useState(chess.board())
   const [from, setFrom] = useState<Square | null>(null)
+  const [PieceColor, setPieceColor] = useState(null)
+  const [isStarted, setisStarted] = useState<Boolean | "waiting">(false)
+
 
   const initGame = () => {
     // Initialises the game
     socket?.send(JSON.stringify({
       type: INIT_GAME
     }))
+    setisStarted("waiting")
   }
 
   useEffect(() => {
-
     if (!socket) {
       return;
     }
@@ -29,16 +32,17 @@ const ChessBoard = () => {
 
       switch (message.type) {
         case INIT_GAME:
-          console.log("init")
           setBoard(chess.board())
+          setisStarted(true)
+          setPieceColor(message.payload)
           break;
         case MOVE:
-          console.log(message)
           chess.move(message.payload)
           setBoard(chess.board())
           break;
         case GAME_OVER:
           console.log("Game Over")
+          setisStarted(false)
           break;
       }
     }
@@ -48,7 +52,7 @@ const ChessBoard = () => {
   return (
 
     <div className="flex justify-center gap-16 ">
-      <div className=" m-3 text-black" >
+      <div className=" m-3 text-black border-black border-2" >
         {
           board.map((row, i) => {
             return <div key={i} className="flex ">
@@ -81,8 +85,17 @@ const ChessBoard = () => {
                       }
                     }
                     }
-                    className={`w-16 h-16 ${(i + j) % 2 == 0 ? 'bg-green-600' : 'bg-white'}  `}>
-                    {square?.type}
+                    className={`w-16 h-16 ${(i + j) % 2 == 0 ? 'bg-gray-900' : 'bg-gray-500'} border  `}>
+
+                <div className="flex items-center justify-center">
+                    {square && square.color === "w" ? (
+                      <img className="w-10 h-10 m-auto mt-[9px]" src={`/${square.type}white.png`} alt={square.square} />
+                    ) : (
+                      square && (
+                        <img className="w-10 h-10 m-auto mt-[9px] " src={`/${square.type}.png`} alt={square.square} />
+                      )
+                    )}
+                  </div>
                   </div>
                 }
 
@@ -91,9 +104,42 @@ const ChessBoard = () => {
         }
       </div>
       <div className=""  >
-        <div onClick={initGame} className="bg-green-600 m-5 py-2 px-4 rounded-md font-semibold hover:bg-green-800 duration-200 transition-all cursor-pointer " >
-          Start Game
-        </div>
+          {
+            isStarted === false ?
+          <div onClick={initGame}
+            className="bg-gray-800 m-5 w-[150px] text-center text-white font-semibold px-6 py-3 rounded-md cursor-pointer
+            hover:bg-gray-700 " >
+              Start Game
+            </div> : 
+            (
+             isStarted === "waiting" ? 
+             <div className="text-black font-semibold my-16"> Looking for an user... </div> :
+            <>
+              {
+                isStarted === true && PieceColor !== null ? 
+                <div className="text-black text-lg font-semibold mt-12 mb-5" >
+                  YOU ARE {PieceColor}
+                </div> : null
+              }
+               <div className="text-black font-semibold w-[300px] border-black 
+                  border py-2 px-5 border-opacity-40 rounded-md flex flex-col ">
+                    
+                  Moves Table 
+        
+                  <div className="flex justify-start gap-10 mt-3">
+                    <div> e2 </div>
+                    <div> e4 </div>
+                  </div>
+        
+                  <div className="flex justify-start gap-10 mt-3">
+                    <div> e2 </div>
+                    <div> e4 </div>
+                  </div>
+                </div>
+              </>
+            )
+           }
+
       </div>
     </div>
 

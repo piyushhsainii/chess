@@ -42,8 +42,8 @@ export class Game {
         if(this.moveCount % 2 === 1 && this.player2 !== socket){
             return;
         }
-        // moves valid or not
         try {
+        // update the board
             this.board.move(move)
             this.moveCount++
          } catch (error) {
@@ -67,7 +67,7 @@ export class Game {
         }
 
         // push the move
-        // update the board
+        // moves valid or not
         if(this.moveCount % 2 === 0){
             this.player1.send(JSON.stringify({
                 type:MOVE,
