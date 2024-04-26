@@ -20,6 +20,7 @@ const ChessBoard = () => {
   const [isMyTurn, setisMyTurn] = useState(null)
   const [isStarted, setisStarted] = useState<Boolean | "waiting">(false)
   const [Moves, setMoves] = useState<Moves[]>([])
+  const [validMovesArray, setValidMovesArray] = useState<string[]>([])
 
   const initGame = () => {
     // Initialises the game
@@ -63,7 +64,7 @@ const ChessBoard = () => {
   return (
 
     <div className="flex justify-center gap-16 ">
-      <div className=" m-3 text-black border-black border-2" >
+      <div className={`m-3 text-black border-black border-2 ${isMyTurn === "b" ? "transform rotate-180" : ""} `} >
         {
           board.map((row, i) => {
             return <div key={i} className="flex ">
@@ -76,38 +77,46 @@ const ChessBoard = () => {
                       if (!isStarted) {
                         return;
                       }
-                      console.log(chess.turn())
                       if (isMyTurn !== chess.turn() ) return;
                       if (!from && square?.color !== chess.turn()) return;
                       if (from === squareRepresentation) {
                         setFrom(null);
+                        console.log(chess.moves({square:squareRepresentation}))
                       }
                       if (!from) {
                         setFrom(squareRepresentation)
+                        const validMoves = chess.moves({square:squareRepresentation})
+                        setValidMovesArray(validMoves)
                       } else {
-                        socket?.send(JSON.stringify({
-                          type: MOVE,
-                          payload:{
-                            move: {
-                              from,
-                              to: squareRepresentation
-                            }
-                          }
-                        }))
-                        console.log(from,squareRepresentation)
+                        try {
                         // storing all the moves
                         // updating the board
-                        try {
-                          chess.move({
+                        if(validMovesArray.length === 0){
+                          setFrom(null)
+                          return
+                        }
+                         chess.move({
                             from: from,
                             to: squareRepresentation
                           })
+                          socket?.send(JSON.stringify({
+                            type: MOVE,
+                            payload:{
+                              move: {
+                                from,
+                                to: squareRepresentation
+                              }
+                            }
+                          }))
+                          setBoard(chess.board())
+                          setFrom(null)
+                          setMoves((prevMoves)=>[...prevMoves,{move:{from:from,to:squareRepresentation}}])
                         } catch (error) {
+                          setFrom(null)
+                          console.log(error)
                           return error
                         }
-                        setBoard(chess.board())
-                        setFrom(null)
-                        setMoves((prevMoves)=>[...prevMoves,{move:{from:from,to:squareRepresentation}}])
+                    
                       }
                     }
                     }
@@ -115,10 +124,10 @@ const ChessBoard = () => {
 
                 <div className="flex items-center justify-center">
                     {square && square.color === "w" ? (
-                      <img className="w-10 h-10 m-auto mt-[9px]" src={`/${square.type}white.png`} alt={square.square} />
+                      <img className={`w-10 h-10 m-auto mt-[9px] ${isMyTurn === "b" ? "transform rotate-180" : ""} `} src={`/${square.type}white.png`} alt={square.square} />
                     ) : (
                       square && (
-                        <img className="w-10 h-10 m-auto mt-[9px] " src={`/${square.type}.png`} alt={square.square} />
+                        <img className={`w-10 h-10 m-auto mt-[9px] ${isMyTurn === "b" ? "transform rotate-180" : ""} `} src={`/${square.type}.png`} alt={square.square} />
                       )
                     )}
                   </div>
@@ -144,9 +153,14 @@ const ChessBoard = () => {
             <>
               {
                 isStarted === true && PieceColor !== null ? 
-                <div className="text-black text-lg font-semibold mt-12 mb-5" >
+               <> 
+                <div className="text-black mt-10 font-semibold mb-2" >
+                  { isMyTurn === chess.turn() ? "YOUR TURN" : "OPPONENT'S TURN" }
+                </div>
+                <div className="text-black text-lg font-semibold  mb-5" >
                   YOU ARE {PieceColor === "w" ? "WHITE" : "BLACK"}
-                </div> : null
+                </div>
+               </> : null
               }
                <div className="text-black font-semibold w-[300px] border-black 
                   border py-2 px-5 border-opacity-40 rounded-md flex flex-col ">
