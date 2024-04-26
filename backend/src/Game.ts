@@ -20,12 +20,12 @@ export class Game {
         this.moveCount = 0
         this.player1.send(JSON.stringify({
             type:INIT_GAME,
-            payload:"WHITE"
+            payload:"w"
         }))
 
         this.player2.send(JSON.stringify({
             type:INIT_GAME,
-            payload:"BLACK"
+            payload:"b"
         }))
        }
 
@@ -45,7 +45,6 @@ export class Game {
         try {
         // update the board
             this.board.move(move)
-            this.moveCount++
          } catch (error) {
             return
         }
@@ -68,17 +67,24 @@ export class Game {
 
         // push the move
         // moves valid or not
+      try {
         if(this.moveCount % 2 === 0){
-            this.player1.send(JSON.stringify({
-                type:MOVE,
-                payload:move
-            }))
+            if (this.player2)
+                this.player2.send(JSON.stringify({
+                    type: MOVE,
+                    payload: move
+                }))
         } else {
-            this.player2.send(JSON.stringify({
-                type:MOVE,
-                payload:move
-            }))
+            if (this.player1)
+                this.player1.send(JSON.stringify({
+                    type: MOVE,
+                    payload: move
+                }))
         }
+    } catch (error) {
+        console.log(error)
+        return error
     }
-
+    this.moveCount++
+    }
 }

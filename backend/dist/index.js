@@ -10,6 +10,5 @@ wss.on("connection", (ws) => {
     });
     // sending socket into gameManagerClass on connection
     gameManager.addUser(ws);
-    ws.send("I am connected");
     ws.on("close", () => gameManager.removeUser(ws));
 });
