@@ -49,19 +49,25 @@ const ChessBoard = () => {
           setPieceColor(message.payload)
           setisMyTurn(message.payload)
           setisGameOver(false)
+          const gameStart = new Audio('/GameStartAudio.mp4')
+          gameStart.play()
           break;
         case MOVE:
           const move = message.payload
           chess.move(message.payload)
           setBoard(chess.board())
           setMoves((prevMoves)=>[...prevMoves,{move} ])
+          const gameMove = new Audio('/Move.mp4')
+          gameMove.play()
           break;
         case GAME_OVER:
           const gameStatus = message.payload.winner
           setisStarted(false)
           setisGameOver(true)
           setPlayerWon(gameStatus)
-          console.log(playerWon)
+          setChess(new Chess())
+          const checkMate = new Audio()
+          checkMate.play()
           break;
       }
     }
@@ -103,6 +109,10 @@ const ChessBoard = () => {
                           setFrom(null)
                           return
                         }
+                        if(chess.isCheck()===true){
+                          const check = new Audio("/Check.mp4")
+                          check.play()
+                        }
                          chess.move({
                             from: from,
                             to: squareRepresentation
@@ -116,6 +126,8 @@ const ChessBoard = () => {
                               }
                             }
                           }))
+                          const gameMove = new Audio('/Move.mp4')
+                          gameMove.play()
                           setBoard(chess.board())
                           setFrom(null)
                           setMoves((prevMoves)=>[...prevMoves,{move:{from:from,to:squareRepresentation}}])
