@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { useSocket } from "../hooks/useSocket"
 import { Chess, Square } from 'chess.js'
 import { GAME_OVER, INIT_GAME, MOVE } from "../messages/message"
+import { algebraicToIndices } from "../utils/SquareNotationCalculator"
 
 interface Moves {
   move:{
@@ -20,7 +21,7 @@ const ChessBoard = () => {
   const [isMyTurn, setisMyTurn] = useState(null)
   const [isStarted, setisStarted] = useState<Boolean | "waiting">(false)
   const [Moves, setMoves] = useState<Moves[]>([])
-  const [validMovesArray, setValidMovesArray] = useState<string[]>([])
+  const [validMovesArray, setValidMovesArray] = useState<[number, number][]>([])
 
   const initGame = () => {
     // Initialises the game
@@ -34,6 +35,7 @@ const ChessBoard = () => {
     if (!socket) {
       return;
     }
+    console.log(validMovesArray, "MOVES LEGAL")
 
   socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
@@ -77,16 +79,17 @@ const ChessBoard = () => {
                       if (!isStarted) {
                         return;
                       }
+                       const validMoves = chess.moves({square:squareRepresentation})
+                       const validSquares = validMoves.map((moves)=>algebraicToIndices(moves))
+                       setValidMovesArray(validSquares)
                       if (isMyTurn !== chess.turn() ) return;
                       if (!from && square?.color !== chess.turn()) return;
                       if (from === squareRepresentation) {
                         setFrom(null);
-                        console.log(chess.moves({square:squareRepresentation}))
                       }
                       if (!from) {
                         setFrom(squareRepresentation)
-                        const validMoves = chess.moves({square:squareRepresentation})
-                        setValidMovesArray(validMoves)
+
                       } else {
                         try {
                         // storing all the moves
@@ -112,8 +115,11 @@ const ChessBoard = () => {
                           setFrom(null)
                           setMoves((prevMoves)=>[...prevMoves,{move:{from:from,to:squareRepresentation}}])
                         } catch (error) {
-                          setFrom(null)
-                          console.log(error)
+                          if( chess.get(squareRepresentation).color === isMyTurn ){
+                            setFrom(squareRepresentation)
+                          } else {
+                            setFrom(null)
+                          }
                           return error
                         }
                     
@@ -123,6 +129,11 @@ const ChessBoard = () => {
                     className={`w-16 h-16 ${(i + j) % 2 == 0 ? 'bg-gray-900' : 'bg-gray-500'} border  `}>
 
                 <div className="flex items-center justify-center">
+                 {validMovesArray.length > 0 &&
+                      validMovesArray.some((move) => move[0] === i && move[1] === j) && (
+                        <div className="flex justify-center text-white
+                        items-center bg-white flex p-2 w-2 mt-14 h-2 absolute   rounded-xl"></div>
+                      )}
                     {square && square.color === "w" ? (
                       <img className={`w-10 h-10 m-auto mt-[9px] ${isMyTurn === "b" ? "transform rotate-180" : ""} `} src={`/${square.type}white.png`} alt={square.square} />
                     ) : (
