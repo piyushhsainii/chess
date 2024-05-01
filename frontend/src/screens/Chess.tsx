@@ -3,6 +3,8 @@ import { useSocket } from "../hooks/useSocket"
 import { Chess, Square } from 'chess.js'
 import { GAME_OVER, INIT_GAME, MOVE } from "../messages/message"
 import { algebraicToIndices } from "../utils/SquareNotationCalculator"
+import Confetti from 'react-confetti'
+
 
 interface Moves {
   move:{
@@ -24,6 +26,11 @@ const ChessBoard = () => {
   const [validMovesArray, setValidMovesArray] = useState<[number, number][]>([])
   const [isGameOver, setisGameOver] = useState(false)
   const [playerWon, setPlayerWon] = useState("")
+  const [playerWonColor, setPlayerWonColor] = useState("")
+  const [Timer1, setTimer1] = useState(10 * 60 * 1000)
+  const [Timer2, setTimer2] = useState(10 * 60 * 1000)
+  const [stopTimer1, setstopTimer1] = useState<Boolean>(true)
+  const [stopTimer2, setstopTimer2] = useState<Boolean>(true)
 
   const initGame = () => {
     // Initialises the game
@@ -32,26 +39,81 @@ const ChessBoard = () => {
     }))
     setisStarted("waiting")
   }
+  const player1seconds = Math.floor(Timer1/1000)
+  const player2seconds = Math.floor(Timer2/1000)
 
+  const player1minutes = Math.floor(player1seconds/60)
+  const player2minutes = Math.floor(player2seconds/60)
+
+  const player1RemainingSeconds = player1seconds%60
+  const player2RemainingSeconds = player2seconds%60
+
+  
+  
   useEffect(() => {
     if (!socket) {
       return;
     }
+    let remainingTime1 = Timer1;
+    let remainingTime2 = Timer2;
 
+ const interval = setInterval(() => {
+        // Update Timer1 if it's not stopped
+        if (!stopTimer1) {
+          console.log("in loop rn")
+            if(Timer1 === 0){
+              console.log("game end?")
+              socket?.send(JSON.stringify({
+                type:GAME_OVER,
+                payload:{
+                    winner: chess.turn() === "w" ? "BLACK WON" : "WHITE WON"
+                }
+             }))  
+              return clearInterval(interval)
+            }
+            remainingTime1 -= 1000;
+            setTimer1(remainingTime1);
+        }
+
+        // Update Timer2 if it's not stopped
+        if (!stopTimer2) {
+          console.log("in loop rn")
+            if(Timer2 === 0){
+              console.log("game end?")
+              socket.send(JSON.stringify({
+                type:GAME_OVER,
+                payload:{
+                    winner: chess.turn() === "w" ? "BLACK WON" : "WHITE WON"
+                }
+             }))  
+              return clearInterval(interval)
+            }
+            remainingTime2 -= 1000;
+            setTimer2(remainingTime2);
+        }
+
+    }, 1000);
   socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
       console.log(message,"in message event")
 
       switch (message.type) {
+
         case INIT_GAME:
           setBoard(chess.board())
           setisStarted(true)
           setPieceColor(message.payload)
           setisMyTurn(message.payload)
           setisGameOver(false)
+          setTimer1(10 * 60 * 1000)
+          setTimer2(10 * 60 * 1000)
+          if(chess.turn() ===  "w" ){
+            setstopTimer1(false) 
+          } 
           const gameStart = new Audio('/GameStartAudio.mp4')
           gameStart.play()
           break;
+
         case MOVE:
           const move = message.payload
           chess.move(message.payload)
@@ -59,25 +121,51 @@ const ChessBoard = () => {
           setMoves((prevMoves)=>[...prevMoves,{move} ])
           const gameMove = new Audio('/Move.mp4')
           gameMove.play()
+          console.log(message.payload)
+          if (message.color === "w") {
+            console.log("control is here for white player");
+            setstopTimer1(false); // Start player 1's timer
+            setstopTimer2(true);  // Stop player 2's timer
+          } 
+          if(message.color === "b") {
+            console.log("control is here for black player");
+            setstopTimer1(true); // Stop player 1's timer
+            setstopTimer2(false); // Start player 2's timer
+          }
           break;
+
         case GAME_OVER:
-          const gameStatus = message.payload.winner
+          const gameStatus = message.payload
           setisStarted(false)
           setisGameOver(true)
-          setPlayerWon(gameStatus)
+          setPlayerWon(gameStatus.winner)
+          setPlayerWonColor(gameStatus.color)
           setChess(new Chess())
           const checkMate = new Audio()
           checkMate.play()
+          setstopTimer1(true)
+          setstopTimer2(true)
           break;
       }
     }
-  }, [socket])
+  return () => clearInterval(interval);
+
+  }, [socket,stopTimer1, stopTimer2 ,Timer1, Timer2])
 
 
   return (
-
+    
     <div className="flex justify-center gap-16 ">
-      <div className={`m-3 text-black border-black border-2 ${isMyTurn === "b" ? "transform rotate-180" : ""} `} >
+      {
+        playerWonColor === PieceColor ? 
+        <Confetti
+      />
+        : null
+      }
+      <div className={`m-3 text-black border-black border ${isMyTurn === "b" ? "transform rotate-180" : ""} `} >
+      <div className={`text-black font-semibold text-lg flex justify-end gap-3 mr-2 ${isMyTurn === "b" ? "transform rotate-180" : ""} `}>
+          TIME LEFT:  {player2minutes} {":"} {String(player2RemainingSeconds).padStart(2,'0')}
+      </div>
         {
           board.map((row, i) => {
             return <div key={i} className="flex ">
@@ -123,9 +211,17 @@ const ChessBoard = () => {
                               move: {
                                 from,
                                 to: squareRepresentation
-                              }
+                              },
+                              color:chess.turn()
                             }
                           }))
+                          if(chess.turn()==="b"){       //when white moves
+                            setstopTimer2(false)        //starts black timer
+                            setstopTimer1(true)         //starts white timer
+                          } else {
+                            setstopTimer1(false)        
+                            setstopTimer2(true)
+                          }
                           const gameMove = new Audio('/Move.mp4')
                           gameMove.play()
                           setBoard(chess.board())
@@ -163,14 +259,19 @@ const ChessBoard = () => {
                 }
 
                 )}  </div>
+                
           })
+          
         }
+        <div className={`text-black flex justify-end font-semibold text-lg ml-2 ${isMyTurn === "b" ? "transform rotate-180" : ""}`}  >
+              TIME LEFT:  {player1minutes} {":"} {String(player1RemainingSeconds).padStart(2,'0')}
+      </div>
       </div>
       <div className=""  >
       {
                   
                   isGameOver !== false && isStarted === false ? 
-                  <div className="text-black m-6 font-semibold text-lg">{playerWon} </div>
+                  <div className="text-black m-6 font-semibold text-lg">{playerWon} </div> 
                   : null
                   
                 }
@@ -194,9 +295,11 @@ const ChessBoard = () => {
                 <div className="text-black mt-10 font-semibold mb-2" >
                   { isMyTurn === chess.turn() ? "YOUR TURN" : "OPPONENT'S TURN" }
                 </div>
+
                 <div className="text-black text-lg font-semibold  mb-5" >
                   YOU ARE {PieceColor === "w" ? "WHITE" : "BLACK"}
                 </div>
+
                </> : null
               }
                <div className="text-black font-semibold w-[300px] max-h-[500px]  border-black 
@@ -217,7 +320,6 @@ const ChessBoard = () => {
               </>
             )
            }
-
       </div>
     </div>
 

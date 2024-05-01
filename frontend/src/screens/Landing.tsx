@@ -4,8 +4,8 @@ const Landing = () => {
 const navigate = useNavigate()
   return (
      <div className="flex justify-evenly  border border-black border-opacity-15">
-            <div className=" w-[500px] py-5" >
-              <img src="/landingLogo.png" className="w-[500px] cursor-pointer "  alt="" />
+            <div className=" w-[500px] py-5  " >
+              <img src="/landingLogo.png" className="w-[500px]  "  alt="" />
             </div>
             <div className="flex items-center" >
                 <button

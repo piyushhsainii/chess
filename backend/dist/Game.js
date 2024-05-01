@@ -11,6 +11,7 @@ class Game {
         this.moves = [];
         this.StartTime = new Date();
         this.moveCount = 0;
+        this.Timer = 10 * 60 * 1000;
         this.player1.send(JSON.stringify({
             type: message_1.INIT_GAME,
             payload: "w"
@@ -20,7 +21,7 @@ class Game {
             payload: "b"
         }));
     }
-    makeAMove(socket, move) {
+    makeAMove(socket, move, color) {
         // 2 checks here
         // is this the users move?
         if (this.moveCount % 2 === 0 && this.player1 !== socket) {
@@ -59,14 +60,15 @@ class Game {
                 if (this.player2)
                     this.player2.send(JSON.stringify({
                         type: message_1.MOVE,
-                        payload: move
+                        payload: move,
                     }));
             }
             else {
                 if (this.player1)
                     this.player1.send(JSON.stringify({
                         type: message_1.MOVE,
-                        payload: move
+                        payload: move,
+                        color
                     }));
             }
         }
@@ -75,6 +77,23 @@ class Game {
             return error;
         }
         this.moveCount++;
+    }
+    endGame() {
+        this.player1.send(JSON.stringify({
+            type: message_1.GAME_OVER,
+            payload: {
+                winner: this.board.turn() === "w" ? "BLACK WON" : "WHITE WON",
+                color: this.board.turn() === "w" ? "b" : "w"
+            }
+        }));
+        this.player2.send(JSON.stringify({
+            type: message_1.GAME_OVER,
+            payload: {
+                winner: this.board.turn() === "w" ? "BLACK WON" : "WHITE WON",
+                color: this.board.turn() === "w" ? "b" : "w"
+            }
+        }));
+        return;
     }
 }
 exports.Game = Game;

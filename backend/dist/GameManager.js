@@ -35,7 +35,13 @@ class GameManager {
             if (message.type === message_1.MOVE) {
                 const game = this.games.find((game) => game.player1 === socket || game.player2 === socket);
                 if (game) {
-                    game.makeAMove(socket, message.payload.move);
+                    game.makeAMove(socket, message.payload.move, message.payload.color);
+                }
+            }
+            if (message.type === message_1.GAME_OVER) {
+                const game = this.games.find((game) => game.player1 === socket || game.player2 === socket);
+                if (game) {
+                    game.endGame();
                 }
             }
         });

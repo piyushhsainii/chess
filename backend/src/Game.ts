@@ -9,7 +9,7 @@ export class Game {
     private moves:string[];
     private StartTime : Date;
     private moveCount : number
-
+    private Timer : number
 
     constructor (player1:WebSocket,player2:WebSocket){
         this.player1 = player1;
@@ -18,6 +18,7 @@ export class Game {
         this.moves = []
         this.StartTime = new Date()
         this.moveCount = 0
+        this.Timer = 10 * 60 * 1000
         this.player1.send(JSON.stringify({
             type:INIT_GAME,
             payload:"w"
@@ -30,9 +31,11 @@ export class Game {
        }
 
     makeAMove(socket:WebSocket, move:{
-        from:string,
-        to:string
-    }){
+            from:string,
+            to:string
+        },
+        color:"b" | "w"
+        ){
 
         // 2 checks here
         // is this the users move?
@@ -72,13 +75,15 @@ export class Game {
             if (this.player2)
                 this.player2.send(JSON.stringify({
                     type: MOVE,
-                    payload: move
+                    payload: move,
+                    
                 }))
         } else {
             if (this.player1)
                 this.player1.send(JSON.stringify({
                     type: MOVE,
-                    payload: move
+                    payload: move,
+                    color
                 }))
         }
     } catch (error) {
@@ -86,5 +91,22 @@ export class Game {
         return error
     }
     this.moveCount++
+    }
+    endGame(){
+    this.player1.send(JSON.stringify({
+        type:GAME_OVER,
+        payload:{
+            winner: this.board.turn() === "w" ? "BLACK WON" : "WHITE WON",
+            color:this.board.turn() === "w" ? "b" : "w"
+        }
+    }))   
+    this.player2.send(JSON.stringify({
+        type:GAME_OVER,
+        payload:{
+            winner: this.board.turn() === "w" ? "BLACK WON" : "WHITE WON",
+            color:this.board.turn() === "w" ? "b" : "w"
+        }
+    }))   
+    return ;
     }
 }
