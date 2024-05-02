@@ -65,6 +65,7 @@ class Game {
                     this.player2.send(JSON.stringify({
                         type: message_1.MOVE,
                         payload: move,
+                        color
                     }));
             }
             else {

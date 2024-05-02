@@ -135,7 +135,7 @@ const ChessBoard = () => {
           setMoves((prevMoves)=>[...prevMoves,{move} ])
           const gameMove = new Audio('/Move.mp4')
           gameMove.play()
-          console.log(message.payload)
+          console.log(message)
           if (message.color === "w") {
             console.log("control is here for white player");
             setstopTimer1(false); // Start player 1's timer

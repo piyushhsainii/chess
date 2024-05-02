@@ -80,7 +80,7 @@ export class Game {
                 this.player2.send(JSON.stringify({
                     type: MOVE,
                     payload: move,
-                    
+                    color
                 }))
         } else {
             if (this.player1)
