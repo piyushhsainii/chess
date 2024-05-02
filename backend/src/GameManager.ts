@@ -7,12 +7,15 @@ export class GameManager{
     private games:Game[] = [];
     private isPending:WebSocket | null;
     private users:WebSocket[] = [];
-
+    private player1Name:string;
+    private player2Name:string;
 
      constructor(){
         this.games = [];
         this.isPending = null
         this.users = []
+        this.player1Name = ''
+        this.player2Name = ''
     }
 
      addUser(socket:WebSocket){
@@ -31,12 +34,13 @@ export class GameManager{
         if(message.type === INIT_GAME){
             if(this.isPending){
                 // Initialises the game
-                const game = new Game(this.isPending,socket)
-
+                this.player2Name = message.name
+                const game = new Game(this.isPending,socket, this.player1Name, this.player2Name)
                 this.games.push(game)
                 this.isPending = null
 
             } else {
+                this.player1Name = message.name
                 this.isPending = socket 
             }
         }
@@ -45,7 +49,7 @@ export class GameManager{
             const game = this.games.find((game)=>game.player1 === socket || game.player2 ===socket)
             if(game){
                 game.makeAMove(socket,message.payload.move,message.payload.color)
-            }
+            } 
         }
 
         if(message.type === GAME_OVER){

@@ -7,11 +7,11 @@ export class Game {
     public player2:WebSocket;
     private board: Chess;
     private moves:string[];
-    private StartTime : Date;
+    private StartTime : Date; 
     private moveCount : number
     private Timer : number
 
-    constructor (player1:WebSocket,player2:WebSocket){
+    constructor (player1:WebSocket,player2:WebSocket,player1name:string,player2name:string){
         this.player1 = player1;
         this.player2 = player2;
         this.board = new Chess();
@@ -21,12 +21,16 @@ export class Game {
         this.Timer = 10 * 60 * 1000
         this.player1.send(JSON.stringify({
             type:INIT_GAME,
-            payload:"w"
+            payload:"w",
+            white:player1name,
+            black:player2name
         }))
 
         this.player2.send(JSON.stringify({
             type:INIT_GAME,
-            payload:"b"
+            payload:"b",
+            black:player2name,
+            white:player1name
         }))
        }
 

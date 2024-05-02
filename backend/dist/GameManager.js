@@ -10,6 +10,8 @@ class GameManager {
         this.games = [];
         this.isPending = null;
         this.users = [];
+        this.player1Name = '';
+        this.player2Name = '';
     }
     addUser(socket) {
         this.users.push(socket);
@@ -24,11 +26,13 @@ class GameManager {
             if (message.type === message_1.INIT_GAME) {
                 if (this.isPending) {
                     // Initialises the game
-                    const game = new Game_1.Game(this.isPending, socket);
+                    this.player2Name = message.name;
+                    const game = new Game_1.Game(this.isPending, socket, this.player1Name, this.player2Name);
                     this.games.push(game);
                     this.isPending = null;
                 }
                 else {
+                    this.player1Name = message.name;
                     this.isPending = socket;
                 }
             }

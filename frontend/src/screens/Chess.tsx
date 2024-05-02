@@ -4,6 +4,14 @@ import { Chess, Square } from 'chess.js'
 import { GAME_OVER, INIT_GAME, MOVE } from "../messages/message"
 import { algebraicToIndices } from "../utils/SquareNotationCalculator"
 import Confetti from 'react-confetti'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 
 interface Moves {
@@ -32,10 +40,16 @@ const ChessBoard = () => {
   const [stopTimer1, setstopTimer1] = useState<Boolean>(true)
   const [stopTimer2, setstopTimer2] = useState<Boolean>(true)
 
+  const [PlayerName, setPlayer1Name] = useState('')
+
+  const [WhitePlayer, setWhitePlayer] = useState('')
+  const [BlackPlayer, setBlackPlayer] = useState('')
+
   const initGame = () => {
     // Initialises the game
     socket?.send(JSON.stringify({
-      type: INIT_GAME
+      type: INIT_GAME,
+      name: PlayerName,
     }))
     setisStarted("waiting")
   }
@@ -57,12 +71,10 @@ const ChessBoard = () => {
     let remainingTime1 = Timer1;
     let remainingTime2 = Timer2;
 
- const interval = setInterval(() => {
+ const interval:any = setInterval(() => {
         // Update Timer1 if it's not stopped
         if (!stopTimer1) {
-          console.log("in loop rn")
             if(Timer1 === 0){
-              console.log("game end?")
               socket?.send(JSON.stringify({
                 type:GAME_OVER,
                 payload:{
@@ -77,7 +89,6 @@ const ChessBoard = () => {
 
         // Update Timer2 if it's not stopped
         if (!stopTimer2) {
-          console.log("in loop rn")
             if(Timer2 === 0){
               console.log("game end?")
               socket.send(JSON.stringify({
@@ -100,6 +111,7 @@ const ChessBoard = () => {
       switch (message.type) {
 
         case INIT_GAME:
+          console.log(message)
           setBoard(chess.board())
           setisStarted(true)
           setPieceColor(message.payload)
@@ -107,6 +119,8 @@ const ChessBoard = () => {
           setisGameOver(false)
           setTimer1(10 * 60 * 1000)
           setTimer2(10 * 60 * 1000)
+          setWhitePlayer(message.white)
+          setBlackPlayer(message.black)
           if(chess.turn() ===  "w" ){
             setstopTimer1(false) 
           } 
@@ -163,9 +177,17 @@ const ChessBoard = () => {
         : null
       }
       <div className={`m-3 text-black border-black border ${isMyTurn === "b" ? "transform rotate-180" : ""} `} >
-      <div className={`text-black font-semibold text-lg flex justify-end gap-3 mr-2 ${isMyTurn === "b" ? "transform rotate-180" : ""} `}>
-          TIME LEFT:  {player2minutes} {":"} {String(player2RemainingSeconds).padStart(2,'0')}
-      </div>
+        {/* black timer */}
+
+        <div className={`text-black flex justify-between font-semibold text-lg mx-2 ${isMyTurn === "b" ? "transform rotate-180" : ""}`}  >
+          <div>
+            {BlackPlayer}
+          </div>
+          <div>
+             TIME LEFT:  {player2minutes} {":"} {String(player2RemainingSeconds).padStart(2,'0')}
+          </div>
+       </div>
+
         {
           board.map((row, i) => {
             return <div key={i} className="flex ">
@@ -263,9 +285,14 @@ const ChessBoard = () => {
           })
           
         }
-        <div className={`text-black flex justify-end font-semibold text-lg ml-2 ${isMyTurn === "b" ? "transform rotate-180" : ""}`}  >
-              TIME LEFT:  {player1minutes} {":"} {String(player1RemainingSeconds).padStart(2,'0')}
-      </div>
+        <div className={`text-black flex justify-between font-semibold text-lg mx-2 ${isMyTurn === "b" ? "transform rotate-180" : ""}`}  >
+          <div>
+            {WhitePlayer}
+          </div>
+          <div>
+             TIME LEFT:  {player1minutes} {":"} {String(player1RemainingSeconds).padStart(2,'0')}
+          </div>
+       </div>
       </div>
       <div className=""  >
       {
@@ -277,11 +304,33 @@ const ChessBoard = () => {
                 }
           {
             isStarted === false ?
-          <div onClick={initGame}
-            className="bg-gray-800 m-5 w-[150px] text-center text-white font-semibold px-6 py-3 rounded-md cursor-pointer
-            hover:bg-gray-700 " >
-              Start Game
-            </div> 
+            <Dialog>
+              <DialogTrigger>
+              <div 
+                className="bg-gray-800 m-5 w-[150px] text-center text-white font-semibold px-6 py-3 rounded-[4px] cursor-pointer
+                hover:bg-gray-700 " >
+                    Start Game
+                  </div> 
+              </DialogTrigger>
+              <DialogContent className="bg-white">
+                <DialogHeader>
+                  <div className="flex items-center justify-center">
+                    <DialogTitle className="text-black"> PLAY AS </DialogTitle>
+                    <div>
+                        <input type="text" onChange={(e)=>setPlayer1Name(e.target.value)} className="bg-white border mx-4 px-2 py-1 my-2 text-black
+                         border-slate-600 border-opacity-40 rounded-md focus  " />
+                    </div>
+                  </div>
+                  <DialogDescription>
+                  <div onClick={initGame}
+                    className="bg-gray-800 my-5 w-[150px] text-center text-white font-semibold px-6 py-3  cursor-pointer
+                    hover:bg-gray-700 flex justify-center rounded-xl m-auto  " >
+                    FIND GAME
+                  </div> 
+                  </DialogDescription>
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
             : 
             (
              isStarted === "waiting" ? 
