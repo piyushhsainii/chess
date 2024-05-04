@@ -100,5 +100,21 @@ class Game {
         }));
         return;
     }
+    sendChat(chat, color) {
+        this.player2.send(JSON.stringify({
+            type: message_1.CHAT,
+            payload: {
+                chat: chat,
+                color
+            }
+        }));
+        this.player1.send(JSON.stringify({
+            type: message_1.CHAT,
+            payload: {
+                chat: chat,
+                color: color
+            }
+        }));
+    }
 }
 exports.Game = Game;

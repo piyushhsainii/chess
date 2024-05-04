@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { useSocket } from "../hooks/useSocket"
 import { Chess, Square } from 'chess.js'
-import { GAME_OVER, INIT_GAME, MOVE } from "../messages/message"
+import { CHAT, GAME_OVER, INIT_GAME, MOVE } from "../messages/message"
 import { algebraicToIndices } from "../utils/SquareNotationCalculator"
 import Confetti from 'react-confetti'
 import {
@@ -20,6 +20,10 @@ interface Moves {
     to:string
   }
 }
+interface Chat {
+  chat:string,
+  color:"w" | "b"
+}
 
 const ChessBoard = () => {
 
@@ -31,6 +35,8 @@ const ChessBoard = () => {
   const [isMyTurn, setisMyTurn] = useState(null)
   const [isStarted, setisStarted] = useState<Boolean | "waiting">(false)
   const [Moves, setMoves] = useState<Moves[]>([])
+  const [Chat, setChat] = useState<Chat[]>([])
+  const [Message, setMessage] = useState("")
   const [validMovesArray, setValidMovesArray] = useState<[number, number][]>([])
   const [isGameOver, setisGameOver] = useState(false)
   const [playerWon, setPlayerWon] = useState("")
@@ -62,7 +68,17 @@ const ChessBoard = () => {
   const player1RemainingSeconds = player1seconds%60
   const player2RemainingSeconds = player2seconds%60
 
-  
+  const sendChat = ()=>{
+
+    socket?.send(JSON.stringify({
+      type:CHAT,
+      payload:{
+        chat:Message,
+        color:PieceColor
+      }
+    }))
+    setMessage("")
+  }
   
   useEffect(() => {
     if (!socket) {
@@ -111,7 +127,6 @@ const ChessBoard = () => {
       switch (message.type) {
 
         case INIT_GAME:
-          console.log(message)
           setBoard(chess.board())
           setisStarted(true)
           setPieceColor(message.payload)
@@ -135,7 +150,7 @@ const ChessBoard = () => {
           setMoves((prevMoves)=>[...prevMoves,{move} ])
           const gameMove = new Audio('/Move.mp4')
           gameMove.play()
-          console.log(message)
+
           if (message.color === "w") {
             console.log("control is here for white player");
             setstopTimer1(false); // Start player 1's timer
@@ -147,6 +162,14 @@ const ChessBoard = () => {
             setstopTimer2(false); // Start player 2's timer
           }
           break;
+
+        case CHAT:
+        const chatData = message.payload
+        console.log(chatData,"this is chatdata")
+        console.log(message,"from chat")
+        setChat((chat)=>[...chat,{ chat:chatData.chat , color:chatData.color  }])
+
+        break;
 
         case GAME_OVER:
           const gameStatus = message.payload
@@ -351,21 +374,40 @@ const ChessBoard = () => {
 
                </> : null
               }
-               <div className="text-black font-semibold w-[300px] max-h-[500px]  border-black 
-                  border py-2 px-5 border-opacity-40 rounded-md flex flex-col ">
-                    
-                  Moves Table 
-                  <div>
-                  {
-                    Moves.map((moves,i)=>(
-                      <div key={moves.move.from} className={`flex border p-2   justify-start gap-10 mt-3 ${i % 2=== 0 ? "" :"bg-black text-white"} `}>
-                          <div> {moves.move.from} </div>
-                          <div> {moves.move.to} </div>
-                      </div>
-                    ))
-                  }
+               <div className="flex gap-3">
+                <div className="text-black font-semibold w-[220px] mt-2 max-h-[500px]  border-black 
+                    border py-2 px-5 border-opacity-40 rounded-md flex flex-col overflow-y-auto">
+                      
+                    Moves Table 
+                    <div>
+                    {
+                      Moves.map((moves,i)=>(
+                        <div key={moves.move.from} className={`flex border p-2   justify-start gap-10 mt-3 ${i % 2=== 0 ? "" :"bg-black text-white"} `}>
+                            <div> {moves.move.from} </div>
+                            <div> {moves.move.to} </div>
+                        </div>
+                      ))
+                    }
+                    </div>
                   </div>
-                </div>
+                  <div className="text-black font-semibold w-[220px] mt-2 h-[500px]  border-black 
+                    border py-2 px-2 border-opacity-40 rounded-md flex justify-between flex-col overflow-y-auto ">
+                      <div className="">
+                      CHAT
+                        {
+                          Chat.map((chat,i)=>(
+                            <div key={chat.chat} className={`flex border p-2   justify-start gap-10 mt-3 ${chat.color === "w" ? "" :"bg-gray-700 text-white"} `}>
+                                <div> {chat.chat} </div>
+                            </div>
+                          ))
+                        }
+                    </div>
+                    <div className="flex gap-2 justify-evenly w-[150px] ">
+                        <input onChange={(e)=>setMessage(e.target.value)} value={Message} type="text" className="bg-white border-2 w-[140px]" placeholder="Send a message..." />
+                        <button onClick={sendChat} className="px-2 py-1 bg-gray-800 text-white font-thin">send</button>
+                    </div>
+                    </div>
+               </div>
               </>
             )
            }

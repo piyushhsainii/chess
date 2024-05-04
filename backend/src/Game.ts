@@ -1,6 +1,6 @@
 import { Chess } from "chess.js";
 import { WebSocket } from "ws"
-import { GAME_OVER, INIT_GAME, MOVE } from "./message";
+import { CHAT, GAME_OVER, INIT_GAME, MOVE } from "./message";
 
 export class Game {
     public player1:WebSocket;
@@ -113,4 +113,21 @@ export class Game {
     }))   
     return ;
     }
+    sendChat(chat:string,color:{piece:"w"| "b"}){
+                this.player2.send(JSON.stringify({
+                    type: CHAT,
+                    payload: {
+                        chat:chat,
+                        color
+                    }
+                }))
+                this.player1.send(JSON.stringify({
+                    type: CHAT,
+                    payload: {
+                        chat:chat,
+                        color:color
+                    }
+                }))
+    }
+
 }

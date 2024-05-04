@@ -23,7 +23,9 @@ class GameManager {
     gameHandler(socket) {
         socket.on("message", (data) => {
             const message = JSON.parse(data.toString());
+            console.log(message, "message in backend");
             if (message.type === message_1.INIT_GAME) {
+                console.log("init game from backend");
                 if (this.isPending) {
                     // Initialises the game
                     this.player2Name = message.name;
@@ -46,6 +48,12 @@ class GameManager {
                 const game = this.games.find((game) => game.player1 === socket || game.player2 === socket);
                 if (game) {
                     game.endGame();
+                }
+            }
+            if (message.type === message_1.CHAT) {
+                const game = this.games.find((game) => game.player1 === socket || game.player2 === socket);
+                if (game) {
+                    game.sendChat(message.payload.chat, message.payload.color);
                 }
             }
         });

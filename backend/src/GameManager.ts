@@ -1,5 +1,5 @@
 import { WebSocket } from "ws";
-import { GAME_OVER, INIT_GAME, MOVE } from "./message";
+import { CHAT, GAME_OVER, INIT_GAME, MOVE } from "./message";
 import { Game } from "./Game";
 
 
@@ -28,10 +28,12 @@ export class GameManager{
     }
 
     private gameHandler(socket:WebSocket){
-       socket.on("message",(data)=>{
+        socket.on("message",(data)=>{
         const message = JSON.parse(data.toString())
+            console.log(message,"message in backend")
 
         if(message.type === INIT_GAME){
+            console.log("init game from backend")
             if(this.isPending){
                 // Initialises the game
                 this.player2Name = message.name
@@ -59,6 +61,12 @@ export class GameManager{
             }
         }
 
+        if(message.type === CHAT){
+            const game = this.games.find((game)=>game.player1 === socket || game.player2 ===socket)
+            if(game){
+                game.sendChat(message.payload.chat, message.payload.color)
+            }
+        }
        })
 
 }

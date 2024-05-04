@@ -6,9 +6,7 @@ config()
 const port = parseInt(process.env.PORT!)
 
 const wss = new WebSocketServer({port: port || 8080})
-
 const gameManager = new GameManager()
-
 wss.on("connection",(ws)=>{
      
     ws.on("error",(error)=>{
