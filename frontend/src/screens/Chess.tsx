@@ -395,7 +395,7 @@ const ChessBoard = () => {
                       <div className="">
                       CHAT
                         {
-                          Chat.map((chat,i)=>(
+                          Chat.map((chat)=>(
                             <div key={chat.chat} className={`flex border p-2   justify-start gap-10 mt-3 ${chat.color === "w" ? "" :"bg-gray-700 text-white"} `}>
                                 <div> {chat.chat} </div>
                             </div>
