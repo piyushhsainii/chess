@@ -5,7 +5,7 @@ export const useSocket = ()=>{
     const [socket, setSocket] = useState<WebSocket | null>(null)
 
 useEffect(() => {
-  const ws = new WebSocket( "ws://localhost:8080")
+  const ws = new WebSocket( "wss://chess-1f07.onrender.com/")
      setSocket(ws)
 
      ws.onclose = (()=>{
